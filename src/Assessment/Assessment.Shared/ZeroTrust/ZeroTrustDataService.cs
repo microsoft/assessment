@@ -241,7 +241,7 @@ namespace Assessment.Shared.ZeroTrust
                   r = new ZeroTrustRecommendation() { Name = "Integrate your Logs with siem tool", ClassName = "" }; ts.Recommendations.Add(r);
             bs = new ZeroTrustBusinessScenario() { Name = "I want to identify and protect my sensitive business data." }; zeroTrustData.BusinessScenarios.Add(bs);
                ts = new ZeroTrustTechnicalScenario() { Name = "3.2 - How do I secure my M365 Apps and Data within those apps?" }; bs.TechnicalScenarios.Add(ts);
-                  r = new ZeroTrustRecommendation() { Name = "Protect from data leakage on mobile devices at the application layer", ClassName = "R0001_MobileDataLeakage" }; ts.Recommendations.Add(r);
+                  r = new ZeroTrustRecommendation() { Name = "Protect from data leakage on mobile devices at the application layer", ClassName = "R0001_C01" }; ts.Recommendations.Add(r);
                      c = new ZeroTrustCheck() { Id = "R0001_C01", Name = "Enable intune App Protection Policy for iOS", License = "", ProductName = "Endpoint Manager / Intune", ZeroTrustPrincipal = "" }; r.Checks.Add(c);
                      c = new ZeroTrustCheck() { Id = "R0001_C02", Name = "Enable intune App Protection Policy for Android", License = "", ProductName = "Endpoint Manager / Intune", ZeroTrustPrincipal = "" }; r.Checks.Add(c);
                      c = new ZeroTrustCheck() { Id = "", Name = "Enable MAM CA Policy", License = "", ProductName = "Azure Active Directory", ZeroTrustPrincipal = "" }; r.Checks.Add(c);
@@ -382,8 +382,10 @@ namespace Assessment.Shared.ZeroTrust
 
 
 
+
     }
 }
+
 
 
 
