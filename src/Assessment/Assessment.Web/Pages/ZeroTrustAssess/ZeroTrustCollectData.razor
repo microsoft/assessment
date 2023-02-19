@@ -1,0 +1,88 @@
+﻿@page "/ZeroTrustCollectData"
+@inject IConfiguration Config
+@inject IHttpClientFactory ClientFactory
+@attribute [Authorize]
+@namespace Assessment.Web
+@using Assessment.Shared.ZeroTrust.Data
+@inject Assessment.Shared.ZeroTrust.IZeroTrustDataService ZeroTrustDataService
+
+<PageTitle>Zero Trust Assessment</PageTitle>
+
+<h1>Zero Trust Assessment</h1>
+
+@if (isLoading)
+{
+    <p>Downloading configuration information for assessment...</p>
+    <div>
+        <div style="display: grid; grid-gap: 12px; grid-auto-flow: column;">
+            <FluentProgressRing style="width: 102px; height: 102px;"></FluentProgressRing>
+        </div>
+
+    </div>
+}
+else
+{
+    if (zeroTrustData == null)
+    {
+        <h2>An error occured. Please re-run assessment.</h2>
+    }
+    else
+    {
+        <div>
+            <p>Tenant: @zeroTrustData.TenantName</p>
+            <p>Assessed by: @zeroTrustData.AssessedBy</p>
+            <p>Date assessed: @zeroTrustData.DateAssessed</p>
+        </div>
+        foreach (var bs in zeroTrustData.BusinessScenarios)
+        {
+            <h2>@bs.Name</h2>
+            foreach (var ts in bs.TechnicalScenarios)
+            {
+                <h3>@ts.Name</h3>
+                foreach (var r in ts.Recommendations)
+                {
+                    <h4>@r.Name</h4>
+                    foreach (var c in r.Checks)
+                    {
+                        <text>
+                            <h5>
+                                @if (c.Status == CheckStatus.Success)
+                                {<text>
+                                    <FluentIcon Name="@FluentIcons.ShieldCheckmark" Variant=IconVariant.Filled Color="Color.Success" />
+                                        [Passed]
+                                    </text>
+        }
+                                else if (c.Status == CheckStatus.Fail)
+                                {<text>
+                                    <FluentIcon Name="@FluentIcons.ShieldDismiss" Variant=IconVariant.Filled Color="Color.Error" />
+                                        [Failed]
+                                    </text>
+        }
+                                else if (c.Status == CheckStatus.NotChecked)
+                                {
+                                    <text>
+                                    <FluentIcon Name="@FluentIcons.ShieldQuestion" Variant=IconVariant.Filled Color="Color.Warning" />
+                                        [Not Checked]
+                                    </text>
+        }
+                                @c.Name
+                            </h5>
+                        </text>
+                    }
+                }
+            }
+        }
+    }
+}
+
+@code {
+    private bool isLoading = true;
+    private ZeroTrustData? zeroTrustData;
+
+    protected override async Task OnInitializedAsync()
+    {
+        zeroTrustData = await ZeroTrustDataService.GetZeroTrustDataAsync();
+
+        isLoading = false;
+    }
+}
