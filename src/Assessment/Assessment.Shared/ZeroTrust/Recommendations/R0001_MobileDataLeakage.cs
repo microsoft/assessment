@@ -3,7 +3,7 @@ using Microsoft.Graph;
 
 namespace Assessment.Shared.ZeroTrust.Recommendations
 {
-    internal class R0001MobileDataLeakage : IZeroTrustRecommendation
+    internal class R0001_MobileDataLeakage : IZeroTrustRecommendation
     {
         public async Task CheckRecommendationAsync(ZeroTrustRecommendation recommendation, GraphServiceClient client)
         {
@@ -22,9 +22,9 @@ namespace Assessment.Shared.ZeroTrust.Recommendations
             {
                 switch(check.Id)
                 {
-                    case "R0001C01-iOSAppProt":
+                    case "R0001_C01": //iOS Application Protection Policy
                         check.Status = hasIosPolicy ? CheckStatus.Success : CheckStatus.Fail; break;
-                    case "R0001C02-AndroidAppProt":
+                    case "R0001_C02": //Android Application Protection Policy
                         check.Status = hasAndroidPolicy ? CheckStatus.Success : CheckStatus.Fail; break;
                 }
             }
