@@ -51,9 +51,9 @@ function GetClassName($checkId) {
     if($checkIdItems.Length -eq 2){
         $classPrefix = $checkIdItems[0]
         $recoCodeFolder = Join-Path $AssessmentSharedProjectFolder '\ZeroTrust\Recommendations'
-        $recoFilePath = Get-ChildItem -Path $recoCodeFolder -Filter "$($classPrefix)_*" | Select-String Name
+        $recoFilePath = Get-ChildItem -Path $recoCodeFolder -Filter "$($classPrefix)_*"
         if($recoFilePath){
-            return $recoFilePath
+            return [System.IO.Path]::GetFileNameWithoutExtension($recoFilePath)
         }
         else {
             throw "No classname with $classPrefix prefix was found in the Assessment.Shared/Recommendations folder."
@@ -74,7 +74,8 @@ $code += "        {`r`n"
 $code += "            ZeroTrustData zeroTrustData = new ZeroTrustData();`r`n"
 $code += "            ZeroTrustBusinessScenario bs; ZeroTrustTechnicalScenario ts; ZeroTrustRecommendation r; ZeroTrustCheck c;`r`n"
 
-foreach ($item in $ztScenarios) {
+foreach ($item in $ztScenarios) {   
+
     $bs = GetFirstLine $item.'Business Scenario'
     if (![string]::IsNullOrEmpty($bs)) {
         $code += "            bs = new ZeroTrustBusinessScenario() { Name = `"$bs`" }; zeroTrustData.BusinessScenarios.Add(bs);`r`n"
@@ -84,14 +85,13 @@ foreach ($item in $ztScenarios) {
         $code += "               ts = new ZeroTrustTechnicalScenario() { Name = `"$ts`" }; bs.TechnicalScenarios.Add(ts);`r`n"
     }
     $r = GetFirstLine $item.'M365 Controls / IT Actions'
+    $checkId = $item.'Name in ZT Asssessment Tool'
     if (![string]::IsNullOrEmpty($r)) {
-        $className = $item.'Name in ZT Asssessment Tool'
+        $className = GetClassName $checkId
         $code += "                  r = new ZeroTrustRecommendation() { Name = `"$r`", ClassName = `"$className`" }; ts.Recommendations.Add(r);`r`n"
     }
     $c = GetFirstLine $item.'Sub Tasks'
-    $checkId = $item.'Name in ZT Asssessment Tool'
     if (![string]::IsNullOrEmpty($c) -and ($checkId -ne 'Ignore')) {
-        $className = GetClassName $checkId
         $license = $item.'License Required'
         $productName = $item.'Product Name'
         $ztPrincipal = $item.'Zero Trust Principal'
