@@ -14,6 +14,7 @@
     <PackageReference Include="Microsoft.Extensions.Http" Version="7.0.0" />
     <PackageReference Include="Microsoft.Fast.Components.FluentUI" Version="2.0.4" />
     <PackageReference Include="Microsoft.Graph" Version="4.53.0" />
+    <PackageReference Include="Syncfusion.Blazor" Version="20.4.0.50" />
   </ItemGroup>
 
   <ItemGroup>

@@ -3,6 +3,9 @@ using Assessment.Web;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Fast.Components.FluentUI;
+using Syncfusion.Blazor;
+
+Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("MTE2NzYwNUAzMjMwMmUzNDJlMzBMU2JQWXQ2UUJ5OXYwWGVUR0ZPVXIyWFA1ZUVNSTkxYVZyeXN4bkplRGkwPQ==");
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -32,4 +35,7 @@ builder.Services.AddHttpClient("GraphAPI", client => client.BaseAddress = new Ur
     .AddHttpMessageHandler<GraphAuthorizationMessageHandler>();
 
 builder.Services.AddScoped<IZeroTrustDataService, ZeroTrustDataService>();
+
+builder.Services.AddSyncfusionBlazor();
+
 await builder.Build().RunAsync();

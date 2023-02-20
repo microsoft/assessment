@@ -3,7 +3,6 @@
 @inject IHttpClientFactory ClientFactory
 @attribute [Authorize]
 @namespace Assessment.Web
-@using Assessment.Shared.ZeroTrust.Data
 @inject Assessment.Shared.ZeroTrust.IZeroTrustDataService ZeroTrustDataService
 
 <PageTitle>Zero Trust Assessment</PageTitle>
@@ -22,100 +21,67 @@
 }
 else
 {
-    if (zeroTrustData == null)
+    if (recommendationData == null)
     {
         <h2>An error occured. Please re-run assessment.</h2>
     }
     else
     {
         <div>
-            <p>Tenant: @zeroTrustData.TenantName</p>
-            <p>Assessed by: @zeroTrustData.AssessedBy</p>
-            <p>Date assessed: @zeroTrustData.DateAssessed</p>
+            <p>Tenant: @recommendationData.TenantName</p>
+            <p>Assessed by: @recommendationData.AssessedBy</p>
+            <p>Date assessed: @recommendationData.DateAssessed</p>
         </div>
-        <FluentDataGrid RowsData="@zeroTrustChecks" ResizableColumns Pagination="@pagination" GridTemplateColumns="1fr 2fr 0.2fr">
 
-            <PropertyColumn Property="@(c => c.Recommendation.Name)" Sortable="true" Title="Recommendation" />
-            <PropertyColumn Property="@(c => c.Name)" Sortable="true" Title="Check" />
-            <TemplateColumn Title="Status" Align="Align.Center" SortBy="@sortByStatus" IsDefaultSort="SortDirection.Ascending">
-                @if (context.Status == CheckStatus.Success)
-                {
-                    <FluentIcon Name="@FluentIcons.ShieldCheckmark" Variant=IconVariant.Filled Color="Color.Success" OnClick="RowClick" />
-                }
-                else if (context.Status == CheckStatus.Fail)
-                {
-                    <FluentIcon Name="@FluentIcons.ShieldDismiss" Variant=IconVariant.Filled Color="Color.Error" OnClick="RowClick" />
-                }
-                else
-                {
-                    <FluentIcon Name="@FluentIcons.ShieldQuestion" Variant=IconVariant.Filled Color="Color.Warning" OnClick="RowClick" />
-                }
-            </TemplateColumn>
-        </FluentDataGrid>
-        <FluentPaginator Value="@pagination" />
+        <SfTreeGrid ChildMapping="Children" TreeColumnIndex="0" DataSource="@TreeData" TValue="TreeViewRow">
+            <TreeGridColumns>
+                <TreeGridColumn Field="TaskName" HeaderText="Recommendation" Width="250"></TreeGridColumn>
+                <TreeGridColumn Field="ProductName" HeaderText="Product" Width="50"></TreeGridColumn>
+                <TreeGridColumn Field="Status" HeaderText="Status" Width="50"></TreeGridColumn>
+            </TreeGridColumns>
+        </SfTreeGrid>
+
     }
 }
 
-<div>
-    <FluentDialog @ref="MyFluentDialog" aria-label="Simple dialog" Modal=@Modal TrapFocus=@TrapFocus @ondialogdismiss=OnDismiss>
-        <h2>Just a simple dialog</h2>
-        <p>The 'Close dialog' button is automatically focussed.</p>
-        <p>The 'Another button' doesn't do anything other than showing receiving focus.</p>
-        <FluentButton Appearance="Appearance.Accent" Autofocus="true" @onclick="OnClose">Close dialog</FluentButton>
-        <FluentButton>Another button</FluentButton>
-    </FluentDialog>
-</div>
-
 @code {
+    private ZeroTrustData? recommendationData;
     private bool isLoading = true;
-    private ZeroTrustData? zeroTrustData;
-    private IQueryable<ZeroTrustCheck>? zeroTrustChecks;
-    PaginationState pagination = new PaginationState { ItemsPerPage = 20 };
-
-    private FluentDialog? MyFluentDialog;
-    public bool TrapFocus = true;
-    public bool Modal = true;
-
-
-    GridSort<ZeroTrustCheck> sortByStatus = GridSort<ZeroTrustCheck>
-     .ByAscending(p => p.Status)
-     .ThenAscending(p => p.Status);
+    public List<TreeViewRow> TreeData = new List<TreeViewRow>();
 
     protected override async Task OnInitializedAsync()
     {
-        zeroTrustData = await ZeroTrustDataService.GetZeroTrustDataAsync();
-        zeroTrustChecks = zeroTrustData.Checks.AsQueryable();
+        recommendationData = await ZeroTrustDataService.GetZeroTrustDataAsync();
+
+        LoadTree(recommendationData);
         isLoading = false;
     }
 
-    protected override void OnAfterRender(bool firstRender)
+    public class TreeViewRow
     {
-        if (firstRender)
-            MyFluentDialog!.Hide();
+        public string TaskName { get; set; }
+        public CheckStatus Status { get; set; }
+        public string ProductName { get; set; }
+        public List<TreeViewRow> Children { get; set; }
     }
 
-    private void OnOpen()
+    private void LoadTree(ZeroTrustData zt)
     {
-        MyFluentDialog!.Show();
-    }
-
-    private void OnClose()
-    {
-        MyFluentDialog!.Hide();
-
-    }
-
-    private void OnDismiss(DialogEventArgs args)
-    {
-        if (args is not null && args.Reason is not null && args.Reason == "dismiss")
+        foreach (var bs in zt.BusinessScenarios)
         {
-            MyFluentDialog!.Hide();
+            foreach (var ts in bs.TechnicalScenarios)
+            {
+                foreach (var r in ts.Recommendations)
+                {
+                    List<TreeViewRow> children = new List<TreeViewRow>();
+                    foreach (var c in r.Checks)
+                    {
+                        TreeViewRow child = new TreeViewRow() { TaskName = c.Name, ProductName = c.ProductName, Status = c.Status };
+                        children.Add(child);
+                    }
+                    TreeData.Add(new TreeViewRow() { TaskName = r.Name, Children = children, Status = CheckStatus.NotChecked });
+                }
+            }
         }
-    }
-
-
-    private void RowClick(MouseEventArgs args)
-    {
-        MyFluentDialog!.Show();
     }
 }
