@@ -33,56 +33,41 @@ else
             <p>Assessed by: @zeroTrustData.AssessedBy</p>
             <p>Date assessed: @zeroTrustData.DateAssessed</p>
         </div>
-        foreach (var bs in zeroTrustData.BusinessScenarios)
-        {
-            <h2>@bs.Name</h2>
-            foreach (var ts in bs.TechnicalScenarios)
-            {
-                <h3>@ts.Name</h3>
-                foreach (var r in ts.Recommendations)
+        <FluentDataGrid RowsData="@zeroTrustChecks" ResizableColumns>
+
+            <PropertyColumn Property="@(c => c.Recommendation.Name)" Sortable="true" Title="Recommendation" />
+            <PropertyColumn Property="@(c => c.Name)" Sortable="true" Title="Check" />
+            <TemplateColumn Title="Status" Align="Align.Center" SortBy="@sortByStatus" IsDefaultSort="SortDirection.Ascending">
+                @if (context.Status == CheckStatus.Success)
                 {
-                    <h4>@r.Name</h4>
-                    foreach (var c in r.Checks)
-                    {
-                        <text>
-                            <h5>
-                                @if (c.Status == CheckStatus.Success)
-                                {<text>
-                                    <FluentIcon Name="@FluentIcons.ShieldCheckmark" Variant=IconVariant.Filled Color="Color.Success" />
-                                        [Passed]
-                                    </text>
-        }
-                                else if (c.Status == CheckStatus.Fail)
-                                {<text>
-                                    <FluentIcon Name="@FluentIcons.ShieldDismiss" Variant=IconVariant.Filled Color="Color.Error" />
-                                        [Failed]
-                                    </text>
-        }
-                                else if (c.Status == CheckStatus.NotChecked)
-                                {
-                                    <text>
-                                    <FluentIcon Name="@FluentIcons.ShieldQuestion" Variant=IconVariant.Filled Color="Color.Warning" />
-                                        [Not Checked]
-                                    </text>
-        }
-                                @c.Name
-                            </h5>
-                        </text>
-                    }
+                    <FluentIcon Name="@FluentIcons.ShieldCheckmark" Variant=IconVariant.Filled Color="Color.Success" />
                 }
-            }
-        }
+                else if (context.Status == CheckStatus.Fail)
+                {
+                    <FluentIcon Name="@FluentIcons.ShieldDismiss" Variant=IconVariant.Filled Color="Color.Error" />
+                }
+                else
+                {
+                    <FluentIcon Name="@FluentIcons.ShieldQuestion" Variant=IconVariant.Filled Color="Color.Warning" />
+                }
+            </TemplateColumn>
+        </FluentDataGrid>
     }
 }
 
 @code {
     private bool isLoading = true;
     private ZeroTrustData? zeroTrustData;
+    private IQueryable<ZeroTrustCheck>? zeroTrustChecks;
+
+    GridSort<ZeroTrustCheck> sortByStatus = GridSort<ZeroTrustCheck>
+     .ByAscending(p => p.Status)
+     .ThenAscending(p => p.Status);
 
     protected override async Task OnInitializedAsync()
     {
         zeroTrustData = await ZeroTrustDataService.GetZeroTrustDataAsync();
-
+        zeroTrustChecks = zeroTrustData.Checks.AsQueryable();
         isLoading = false;
     }
 }

@@ -95,7 +95,7 @@ foreach ($item in $ztScenarios) {
         $license = $item.'License Required'
         $productName = $item.'Product Name'
         $ztPrincipal = $item.'Zero Trust Principal'
-        $code += "                     c = new ZeroTrustCheck() { Id = `"$checkId`", Name = `"$c`", License = `"$license`", ProductName = `"$productName`", ZeroTrustPrincipal = `"$ztPrincipal`" }; r.Checks.Add(c);`r`n"
+        $code += "                     c = new ZeroTrustCheck(r, ts, bs) { Id = `"$checkId`", Name = `"$c`", License = `"$license`", ProductName = `"$productName`", ZeroTrustPrincipal = `"$ztPrincipal`" }; r.Checks.Add(c); zeroTrustData.Checks.Add(c);`r`n"
     }
 }
 $code += "            return zeroTrustData;`r`n"
