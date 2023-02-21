@@ -33,55 +33,93 @@ else
             <p>Date assessed: @recommendationData.DateAssessed</p>
         </div>
 
-        <SfTreeGrid ChildMapping="Children" TreeColumnIndex="0" DataSource="@TreeData" TValue="TreeViewRow">
+        <SfTreeGrid ChildMapping="Children" TreeColumnIndex="1" DataSource="@TreeData" TValue="TreeViewRow" AllowSelection="true" AllowResizing="true">
+            <TreeGridSelectionSettings Type="Syncfusion.Blazor.Grids.SelectionType.Single" Mode="Syncfusion.Blazor.Grids.SelectionMode.Row" CheckboxMode="CheckboxSelectionType.ResetOnRowClick">
+            </TreeGridSelectionSettings>
             <TreeGridColumns>
                 <TreeGridColumn Field="TaskName" HeaderText="Recommendation" Width="250"></TreeGridColumn>
-                <TreeGridColumn Field="ProductName" HeaderText="Product" Width="50"></TreeGridColumn>
-                <TreeGridColumn Field="Status" HeaderText="Status" Width="50"></TreeGridColumn>
+                <TreeGridColumn Field="ProductName" HeaderText="Product" Width="80"></TreeGridColumn>
+                <TreeGridColumn Field="StatusText" HeaderText="Status" Width="50" TextAlign="Syncfusion.Blazor.Grids.TextAlign.Center"></TreeGridColumn>
             </TreeGridColumns>
         </SfTreeGrid>
-
     }
 }
 
 @code {
     private ZeroTrustData? recommendationData;
     private bool isLoading = true;
-    public List<TreeViewRow> TreeData = new List<TreeViewRow>();
+    public List<TreeViewRow>? TreeData;
 
     protected override async Task OnInitializedAsync()
     {
         recommendationData = await ZeroTrustDataService.GetZeroTrustDataAsync();
 
-        LoadTree(recommendationData);
+        TreeData = await LoadTree(recommendationData);
         isLoading = false;
     }
 
     public class TreeViewRow
     {
+        public TreeViewRow() { }
+        public TreeViewRow(string taskName, string productName, CheckStatus status, List<TreeViewRow>? children)
+        {
+            TaskName = taskName;
+            ProductName = productName;
+            Status = status;
+            Children = children;
+            switch (status)
+            {
+                case CheckStatus.Success:
+                    StatusColor = Color.Success;
+                    StatusIcon = FluentIcons.ShieldCheckmark.ToString();
+                    StatusText = "Completed";
+                    break;
+                case CheckStatus.Fail:
+                    StatusColor = Color.Error;
+                    StatusIcon = FluentIcons.ShieldDismiss.ToString();
+                    StatusText = "To address";
+                    break;
+                case CheckStatus.NotChecked:
+                    StatusColor = Color.Warning;
+                    StatusIcon = FluentIcons.ShieldQuestion.ToString();
+                    StatusText = "Not checked";
+                    break;
+            }
+        }
         public string TaskName { get; set; }
         public CheckStatus Status { get; set; }
+        public Color StatusColor { get; set; }
+        public string StatusIcon { get; set; }
+        public string StatusText { get; set; }
         public string ProductName { get; set; }
-        public List<TreeViewRow> Children { get; set; }
+        public List<TreeViewRow>? Children { get; set; }
     }
 
-    private void LoadTree(ZeroTrustData zt)
+    private async Task<List<TreeViewRow>> LoadTree(ZeroTrustData zt)
     {
+        var treeData = new List<TreeViewRow>();
         foreach (var bs in zt.BusinessScenarios)
         {
             foreach (var ts in bs.TechnicalScenarios)
             {
                 foreach (var r in ts.Recommendations)
                 {
-                    List<TreeViewRow> children = new List<TreeViewRow>();
+                    List<TreeViewRow>? children = new List<TreeViewRow>();
                     foreach (var c in r.Checks)
                     {
-                        TreeViewRow child = new TreeViewRow() { TaskName = c.Name, ProductName = c.ProductName, Status = c.Status };
+                        TreeViewRow child = new TreeViewRow(c.Name, c.ProductName, c.Status, null);
                         children.Add(child);
                     }
-                    TreeData.Add(new TreeViewRow() { TaskName = r.Name, Children = children, Status = CheckStatus.NotChecked });
+                    treeData.Add(new TreeViewRow() { TaskName = r.Name, Children = children, Status = CheckStatus.NotChecked });
                 }
             }
         }
+        return treeData;
+    }
+
+    private void OnRowSelected(RowSelectEventArgs<TreeViewRow> args)
+    {
+        args.PreventRender = true; //without this, you may see noticeable delay in selection with 75 rows in grid.
+        var row = args.Data;
     }
 }
