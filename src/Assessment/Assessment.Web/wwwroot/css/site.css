@@ -283,6 +283,15 @@ code {
         content: var(--blazor-load-percentage-text, "Loading");
     }
 
+.treeStatus {
+    display: flex;
+    align-items: center;
+}
+
+    .treeStatus label {
+        margin-left: .5em;
+    }
+
 @media (max-width: 767px) {
 
     header {

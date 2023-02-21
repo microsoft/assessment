@@ -37,10 +37,36 @@ else
             <TreeGridSelectionSettings Type="Syncfusion.Blazor.Grids.SelectionType.Single" Mode="Syncfusion.Blazor.Grids.SelectionMode.Row" CheckboxMode="CheckboxSelectionType.ResetOnRowClick">
             </TreeGridSelectionSettings>
             <TreeGridColumns>
+                <TreeGridColumn Type="ColumnType.CheckBox" Width="20" TextAlign="Syncfusion.Blazor.Grids.TextAlign.Center">
+                    <HeaderTemplate></HeaderTemplate>
+                </TreeGridColumn>
                 <TreeGridColumn Field="TaskName" HeaderText="Recommendation" Width="250"></TreeGridColumn>
                 <TreeGridColumn Field="ProductName" HeaderText="Product" Width="80"></TreeGridColumn>
-                <TreeGridColumn Field="StatusText" HeaderText="Status" Width="50" TextAlign="Syncfusion.Blazor.Grids.TextAlign.Center"></TreeGridColumn>
+                <TreeGridColumn HeaderText="Status" Width="80" TextAlign="Syncfusion.Blazor.Grids.TextAlign.Left">
+                    <Template>
+                        <div class="treeStatus">
+                            @{
+                                var row = (context as TreeViewRow);
+                                if (row.Status == CheckStatus.Success)
+                                {
+                                    <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><!--!--><path fill="var(--success)" d="M3 5.75c0-.41.34-.75.75-.75 2.66 0 5.26-.94 7.8-2.85.27-.2.63-.2.9 0C14.99 4.05 17.59 5 20.25 5c.41 0 .75.34.75.75V11c0 .34-.01.67-.04 1a6.5 6.5 0 0 0-8.33 9.8l-.36.15a.75.75 0 0 1-.54 0C5.96 19.68 3 16 3 11V5.75ZM23 17.5a5.5 5.5 0 1 0-11 0 5.5 5.5 0 0 0 11 0Zm-2.15-2.35c.2.2.2.5 0 .7l-4 4a.5.5 0 0 1-.7 0l-2-2a.5.5 0 0 1 .7-.7l1.65 1.64 3.65-3.64c.2-.2.5-.2.7 0Z"></path></svg>
+                                }
+                                else if (row.Status == CheckStatus.Fail)
+                                {
+                                    <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><!--!--><path fill="var(--error)" d="M12.45 2.15C14.99 4.05 17.59 5 20.25 5c.41 0 .75.34.75.75V11c0 5-2.96 8.68-8.73 10.95a.75.75 0 0 1-.54 0C5.96 19.68 3 16 3 11V5.75c0-.41.34-.75.75-.75 2.66 0 5.26-.94 7.8-2.85.27-.2.63-.2.9 0ZM9.28 8.22a.75.75 0 0 0-1.13.98l.07.08L10.94 12l-2.72 2.73a.75.75 0 1 0 1.06 1.06L12 13.06l2.73 2.73c.26.26.68.29.97.07l.09-.07a.75.75 0 0 0 .07-.98l-.07-.08L13.06 12l2.73-2.72a.75.75 0 1 0-1.06-1.06L12 10.94 9.28 8.22Z"></path></svg>
+                                }
+                                else if (row.Status == CheckStatus.NotChecked)
+                                {
+                                    <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><!--!--><path fill="var(--warning)" d="M3 5.75c0-.41.34-.75.75-.75 2.66 0 5.26-.94 7.8-2.85.27-.2.63-.2.9 0C14.99 4.05 17.59 5 20.25 5c.41 0 .75.34.75.75V11c0 5-2.96 8.68-8.73 10.95a.75.75 0 0 1-.54 0C5.96 19.68 3 16 3 11V5.75ZM13 16a1 1 0 1 0-2 0 1 1 0 0 0 2 0Zm-2.25-6.25a1.25 1.25 0 1 1 2.5 0c0 .45-.25.74-.78 1.27l-.05.05c-.47.46-1.17 1.16-1.17 2.28a.75.75 0 0 0 1.5 0c0-.45.25-.74.78-1.27l.05-.05c.47-.47 1.17-1.16 1.17-2.28a2.75 2.75 0 1 0-5.5 0 .75.75 0 0 0 1.5 0Z"></path></svg>
+                                }
+                                <label>@row.StatusText</label>
+                            }
+                        </div>
+                    </Template>
+
+                </TreeGridColumn>
             </TreeGridColumns>
+            <TreeGridEvents TValue="TreeViewRow" RowSelected="OnRowSelected"></TreeGridEvents>
         </SfTreeGrid>
     }
 }
@@ -72,7 +98,7 @@ else
                 case CheckStatus.Success:
                     StatusColor = Color.Success;
                     StatusIcon = FluentIcons.ShieldCheckmark.ToString();
-                    StatusText = "Completed";
+                    StatusText = "Implemented";
                     break;
                 case CheckStatus.Fail:
                     StatusColor = Color.Error;
@@ -87,16 +113,21 @@ else
             }
         }
         public string TaskName { get; set; }
-        public CheckStatus Status { get; set; }
+        public CheckStatus? Status { get; set; }
         public Color StatusColor { get; set; }
         public string StatusIcon { get; set; }
         public string StatusText { get; set; }
         public string ProductName { get; set; }
         public List<TreeViewRow>? Children { get; set; }
+        public ZeroTrustCheck? Check { get; set; }
+        public ZeroTrustRecommendation? Recommendation { get; set; }
     }
 
     private async Task<List<TreeViewRow>> LoadTree(ZeroTrustData zt)
     {
+        Array values = Enum.GetValues(typeof(CheckStatus));
+        Random random = new Random();
+
         var treeData = new List<TreeViewRow>();
         foreach (var bs in zt.BusinessScenarios)
         {
@@ -107,10 +138,14 @@ else
                     List<TreeViewRow>? children = new List<TreeViewRow>();
                     foreach (var c in r.Checks)
                     {
-                        TreeViewRow child = new TreeViewRow(c.Name, c.ProductName, c.Status, null);
+                        if (c.Status == CheckStatus.NotChecked) //TODO: Remove random once actual checks are in.
+                        { 
+                            c.Status = (CheckStatus)values.GetValue(random.Next(values.Length)); 
+                        }
+                        TreeViewRow child = new TreeViewRow(c.Name, c.ProductName, c.Status, null) { Check = c };
                         children.Add(child);
                     }
-                    treeData.Add(new TreeViewRow() { TaskName = r.Name, Children = children, Status = CheckStatus.NotChecked });
+                    treeData.Add(new TreeViewRow() { TaskName = r.Name, Children = children, Status = null, Recommendation = r });
                 }
             }
         }
