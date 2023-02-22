@@ -114,6 +114,13 @@ else
                         <p>
                             @currentRow.Check.License
                         </p><p></p>
+                        @if(!string.IsNullOrEmpty(currentRow.Check.DocLinkText) &&  !string.IsNullOrEmpty(currentRow.Check.DocLinkUrl))
+                        {
+                            <b>Learn more</b>
+                            <p>
+                                <a target="_blank" href="@currentRow.Check.DocLinkUrl">@currentRow.Check.DocLinkText</a>
+                            </p><p></p>
+                        }
                     </Content>
                 </DialogTemplates>
             </SfDialog>
